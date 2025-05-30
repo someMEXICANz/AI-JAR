@@ -1,0 +1,12 @@
+using namespace vex;
+
+extern brain Brain;
+extern controller Controller1;
+
+extern gps GPS;
+extern digital_out arm;
+extern limit LiftSwitch;
+extern motor_group Lift_Winch;
+
+
+void vexcodeInit(void);
