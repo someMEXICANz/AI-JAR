@@ -5,7 +5,7 @@ extern controller Controller1;
 
 extern gps GPS;
 extern digital_out arm;
-extern limit LiftSwitch;
+extern line Arm_Limit;
 extern motor_group Lift_Winch;
 
 

@@ -23,13 +23,13 @@ competition Competition;
 /*  already have configured your motors.                                     */
 /*---------------------------------------------------------------------------*/
 // Drivetrain Motors
-motor LeftMotorA = motor(PORT1,ratio6_1,true); //
-motor LeftMotorB = motor(PORT9,ratio6_1,true); //
-motor LeftMotorC = motor(PORT10,ratio6_1,true); //
+motor LeftMotorA = motor(PORT12,ratio6_1,false); //
+motor LeftMotorB = motor(PORT11,ratio6_1,true); //
+motor LeftMotorC = motor(PORT13,ratio6_1,true); //
 motor_group LeftDrive = motor_group(LeftMotorA, LeftMotorB, LeftMotorC);
 
-motor RightMotorA = motor(PORT13,ratio6_1,false); //
-motor RightMotorB = motor(PORT16,ratio6_1,false); //
+motor RightMotorA = motor(PORT18,ratio6_1,true); //
+motor RightMotorB = motor(PORT19,ratio6_1,false); //
 motor RightMotorC = motor(PORT20,ratio6_1,false); //
 motor_group RightDrive = motor_group(RightMotorA, RightMotorB, RightMotorC);
 
@@ -223,7 +223,8 @@ void pre_auton() {
 
 void autonomous(void) 
 {
-  chassis.drive_distance(25);
+  //chassis.drive_distance(50);
+  chassis.turn_to_angle(180);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -236,9 +237,34 @@ void autonomous(void)
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 
-void usercontrol(void) {
-  // User control code here, inside the loop
-  while (1) {
+bool RemoteControlCodeEnabled = true;
+bool Controller1UpDownButtonsControlMotorsStopped = true;
+
+void usercontrol(void) 
+{
+  Lift_Winch.setVelocity(100, pct);
+  while (1) 
+  {
+
+    if(RemoteControlCodeEnabled) 
+    {
+      // check the ButtonUp/ButtonDown status to control Lift_Winch
+      if (Controller1.ButtonUp.pressing()) 
+      {
+        Lift_Winch.spin(forward);
+        Controller1UpDownButtonsControlMotorsStopped = false;
+      } 
+      else if (Controller1.ButtonDown.pressing()) 
+      {
+        Lift_Winch.spin(reverse);
+        Controller1UpDownButtonsControlMotorsStopped = false;
+      } 
+      else if (!Controller1UpDownButtonsControlMotorsStopped) 
+      {
+        Lift_Winch.stop();
+        // set the toggle so that we don't constantly tell the motor to stop when the buttons are released
+        Controller1UpDownButtonsControlMotorsStopped = true;
+      }
     // This is the main execution loop for the user control program.
     // Each time through the loop your program should update motor + servo
     // values based on feedback from the joysticks.
@@ -251,9 +277,9 @@ void usercontrol(void) {
     //Replace this line with chassis.control_tank(); for tank drive 
     //or chassis.control_holonomic(); for holo drive.
     chassis.control_arcade();
-
     wait(20, msec); // Sleep the task for a short amount of time to
                     // prevent wasted resources.
+    }
   }
 }
 

@@ -9,7 +9,8 @@ controller Controller1;
 
 gps GPS = gps(PORT5, -88.9, -125, mm, 270);
 digital_out arm = digital_out(Brain.ThreeWirePort.B);
-limit LiftSwitch = limit(Brain.ThreeWirePort.H);
+line Arm_Limit = line(Brain.ThreeWirePort.H);
+
 
       //// Lift Motor Layout ////
 ////////////////  |    ////////////////
