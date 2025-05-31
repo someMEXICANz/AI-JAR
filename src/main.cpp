@@ -298,11 +298,12 @@ int main() {
   thread t1(dashboardTask);
 
   // Set up callbacks for autonomous and driver control periods.
-  Competition.autonomous(autonomous);
+  Competition.autonomous(drive_test);
   Competition.drivercontrol(usercontrol);
 
   // Run the pre-autonomous function.
   pre_auton();
+  FILE *fp = fopen("/dev/serial2","wb");
 
   // Prevent main from exiting with an infinite loop.
   while (true) {
@@ -312,8 +313,7 @@ int main() {
       // set our location to be sent to partner robot
       link.set_remote_location( local_map.pos.x, local_map.pos.y, local_map.pos.az, local_map.pos.status );
 
-      // fprintf(fp, "%.2f %.2f %.2f\n", local_map.pos.x, local_map.pos.y, local_map.pos.az)
-
+      fprintf(fp, "GPS Position X:%.2f, Y:%.2f, Heading:%.2f\r\n", GPS.xPosition(inches), GPS.yPosition(inches), GPS.heading(deg));
       // request new data    
       // NOTE: This request should only happen in a single task.    
       jetson_comms.request_map();

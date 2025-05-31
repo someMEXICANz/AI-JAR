@@ -1,4 +1,5 @@
 #include "vex.h"
+#include "ai_functions.h"
 
 /**
  * Resets the constants for auton movement.
@@ -27,8 +28,20 @@ void default_constants(){
  */
 
 void drive_test()
-{
-  chassis.drive_distance(50);
+{ 
+  chassis.set_heading(GPS.heading(degrees));
+  double midPos[2] = {-35.46, -49.21};
+  moveToPoint(midPos[0], midPos[1], true);
+
+
+
+
+//   float startAng = calculateBearing(midPos[0], midPos[1], inches);
+//   chassis.turn_to_angle(startAng);
+//   float distance = distanceTo(midPos[0], midPos[1], inches);
+//   chassis.drive_distance(distance);
+//   chassis.turn_to_angle(45);
+//   float endPos[2] = {23.34, 43.43};
 }
 
 /**

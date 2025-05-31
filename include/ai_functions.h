@@ -23,10 +23,15 @@ enum OBJECT {
 using namespace vex;
 
 // Calculates the distance to a given target (x, y)
-double distanceTo(double target_x, double target_y);
+double distanceTo(double target_x, double target_y, distanceUnits units);
+
+double calculateBearing(double targetX, double targetY, distanceUnits targetUnits);
 
 // Moves the robot to a specified position and orientation
-void moveToPosition(double target_x, double target_y, double target_theta);
+// void moveToPosition(double target_x, double target_y, double target_theta);
+
+void moveToPoint(double target_x, double target_y, bool FrontFacing);
+
 
 // Finds a target object based on the specified type
 DETECTION_OBJECT findTarget(int type);

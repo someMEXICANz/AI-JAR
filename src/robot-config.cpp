@@ -7,7 +7,10 @@ using namespace vex;
 brain  Brain;
 controller Controller1;
 
-gps GPS = gps(PORT5, -88.9, -125, mm, 270);
+gps GPS = gps(PORT5, -110, 42.9, mm, 270);
+
+
+// -125 on X && +42.9 on Y
 digital_out arm = digital_out(Brain.ThreeWirePort.B);
 line Arm_Limit = line(Brain.ThreeWirePort.H);
 
@@ -38,6 +41,12 @@ void vexcodeInit( void )
 
   chassis.Gyro.calibrate();
   while (chassis.Gyro.isCalibrating()) 
+  {
+    wait(25, msec);
+  }
+
+  GPS.calibrate();
+  while (GPS.isCalibrating()) 
   {
     wait(25, msec);
   }

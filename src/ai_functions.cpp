@@ -20,16 +20,35 @@ using namespace std;
 
 
 // Calculates the distance to the coordinates from the current robot position
-double distanceTo(double target_x, double target_y){
+double distanceTo(double target_x, double target_y, distanceUnits units = vex::distanceUnits::in)
+{
     double distance = sqrt(pow((target_x - GPS.xPosition(vex::distanceUnits::cm)), 2) + pow((target_y - GPS.yPosition(vex::distanceUnits::cm)), 2));
-    return distance;
+    
+    if( units == vex::distanceUnits::in)
+        return (distance / 2.54);
+    else if(units == vex::distanceUnits::mm)
+        return (distance * 10);
+    else
+        return distance;
+
 }
 
 // Calculates the bearing to drive to the target coordinates in a straight line aligned with global coordinate/heading system.
-double calculateBearing(double currX, double currY, double targetX, double targetY) {
+double calculateBearing(double targetX, double targetY, distanceUnits targetUnits = vex::distanceUnits::cm) 
+{
+    if(targetUnits == vex::distanceUnits::in)
+    {
+        targetX = targetX * 2.54;
+        targetY = targetY * 2.54;
+    }
+    else if(targetUnits == vex::distanceUnits::mm)
+    {
+        targetX = targetX / 10;
+        targetY = targetY / 10;
+    }
     // Calculate the difference in coordinates
-    double dx = targetX - currX;
-    double dy = targetY - currY;
+    double dx = targetX - GPS.xPosition(vex::distanceUnits::cm);
+    double dy = targetY - GPS.yPosition(vex::distanceUnits::cm);
 
     // Calculate the bearing in radians
     double bearing_rad = atan2(dy, dx);
@@ -96,29 +115,96 @@ void driveFor(int heading, double distance, int speed){
     chassis.drive_distance(distance);
 }
 
-// Method that moves to a given (x,y) position and a desired target theta to finish movement facing
-void moveToPosition(double target_x, double target_y, double target_theta = -1) {
-    // Calculate the angle to turn to face the target
-    double intialHeading = calculateBearing(GPS.xPosition(distanceUnits::cm), GPS.yPosition(distanceUnits::cm), target_x, target_y);
-    // Turn to face the target
-    turnTo(intialHeading, 10, 15);
-    double distance = distanceTo(target_x, target_y);
-    // Move to the target, only 30% of total distance to account for error
-    driveFor(intialHeading, distance*0.3, 50);
+// // Method that moves to a given (x,y) position and a desired target theta to finish movement facing
+// void moveToPosition(double target_x, double target_y, double target_theta = -1) {
+//     // Calculate the angle to turn to face the target
+//     double intialHeading = calculateBearing(target_x, target_y);
+//     // Turn to face the target
+//     turnTo(intialHeading, 10, 15);
+//     double distance = distanceTo(target_x, target_y, inches);
+//     // Move to the target, only 30% of total distance to account for error
+//     driveFor(intialHeading, distance*0.3, 50);
 
-    // Recalculate the heading and distance to the target
-    double heading = calculateBearing(GPS.xPosition(distanceUnits::cm), GPS.yPosition(distanceUnits::cm), target_x, target_y);
-    turnTo(heading, 15, 10);
-    distance = distanceTo(target_x, target_y);
-    // Move to the target, completing the remaining distance
-    driveFor(heading, distance, 20);
+//     // Recalculate the heading and distance to the target
+//     double heading = calculateBearing(target_x, target_y);
+//     turnTo(heading, 15, 10);
+//     distance = distanceTo(target_x, target_y, inches);
+//     // Move to the target, completing the remaining distance
+//     driveFor(heading, distance, 20);
 
-    // Turn to the final target heading if specified, otherwise use current heading
-    if (target_theta == -1){
-        target_theta = GPS.heading();
-    }
-    turnTo(target_theta, 5, 2);
+//     // Turn to the final target heading if specified, otherwise use current heading
+//     if (target_theta == -1){
+//         target_theta = GPS.heading();
+//     }
+//     turnTo(target_theta, 5, 2);
+// }
+
+
+void moveToPoint(double target_x, double target_y, bool FrontFacing = true)
+{   
+    float ThresholdRad = 18; // represnts the radius (cm) of the current postion if target point lies within the circle then move to postion function will end
+    bool arrived2Target = false;
+    
+    //fprintf(fp,"\rTMoving to target point (%.2f, %.2f)\n", target_x ,target_y);
+    while(!arrived2Target)
+    {
+     
+        // if(((Brain.Timer.system() - startOfInteractionTime)/1000)>breakOutTime){
+        //                fprintf(fp,"\rBREAK\n");
+        //     fprintf(fp,"\rBREAK\n");
+        //     fprintf(fp,"\rBREAK\n");
+        //     break;
+        // }
+        double X_Pos = GPS.xPosition(vex::distanceUnits::cm);
+        double Y_Pos = GPS.yPosition(vex::distanceUnits::cm);
+        // Check to see if we have arrived to target 
+        double threshold = pow((X_Pos - target_x), 2) + pow((Y_Pos - target_y),2);
+        if(threshold <= pow(ThresholdRad, 2))
+        {   
+                //fprintf(fp,"\rRobot is within the threshold of target\n");
+                break;
+        }
+        // Turn Function
+        double intialHeading = calculateBearing( target_x, target_y);
+        double diff = fabs(GPS.heading() - intialHeading);
+        double result = (diff <= 180.0) ? diff : 360.0 - diff;
+
+        if((result > 90))
+        {
+            intialHeading +=  180;
+        }
+        chassis.set_heading(GPS.heading(degrees));
+        chassis.turn_to_angle(intialHeading);
+        //Drive Function
+        //chassis.desired_heading = intialHeading;
+        float distance = distanceTo(target_x, target_y, inches);
+        if((result > 90))
+        {
+            distance = distance * -1;
+        }
+        chassis.drive_distance(distance);
+        wait(20,msec);
+   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Function to find the target object based on type and return its record
 DETECTION_OBJECT findTarget(int type){
@@ -147,7 +233,7 @@ void goToObject(OBJECT type){
     }
   
     // Move to the detected target's position
-    moveToPosition(target.mapLocation.x*100, target.mapLocation.y*100);
+    //moveToPosition(target.mapLocation.x*100, target.mapLocation.y*100);
 }
 
 // Function to grab a ring when the arm is positioned over it
